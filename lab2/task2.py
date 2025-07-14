@@ -1,10 +1,10 @@
-from neural_network import NeuralNetwork
+from ..lab1.task4 import NeuralNetwork
 from task1 import error, next_epoc
 
 def train_neural_network(nn, inputs, goals, alpha):
+    # One layer neural network only
     err = 0
-    for i, input in enumerate(inputs):
-        goal = goals[i]
+    for input, goal in zip(inputs, goals):
         weights = nn.weights_array[0]
         new_weights = next_epoc(input, weights, goal, alpha)
 

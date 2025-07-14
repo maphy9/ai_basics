@@ -1,10 +1,6 @@
 def neuron(input, weights, bias):
-    if len(input) != len(weights):
-        raise Exception('Bad vector dimensions')
-
     output = bias
-    for i, x in enumerate(input):
-        w = weights[i]
+    for x, w in zip(input, weights):
         output += w * x
 
     return output

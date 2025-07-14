@@ -1,5 +1,5 @@
 from task2 import train_neural_network
-from neural_network import NeuralNetwork
+from ..lab1.task4 import NeuralNetwork
 from testing_set import inputs as testing_inputs, goals as testing_goals
 from training_set import inputs as training_inputs, goals as training_goals
 from random import uniform
@@ -12,7 +12,6 @@ if __name__ == '__main__':
 
     for i in range(1000):
         err = train_neural_network(nn, training_inputs, training_goals, alpha)
-        print(f'{i}) {err}')
     
     correct_count = 0
     for i, input in enumerate(testing_inputs):
@@ -26,9 +25,6 @@ if __name__ == '__main__':
                 max_index = j
         goal = testing_goals[i]
         if goal[max_index] == 1:
-            print(f'{i}) CORRECT')
             correct_count += 1
-        else:
-            print(f'{i}) INCORRECT')
 
     print(f'Result: {correct_count / len(testing_goals)}')

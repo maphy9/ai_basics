@@ -1,21 +1,22 @@
-from neural_network import neural_network
+from ..lab1.task3 import neural_network
 
 def next_epoc(input, weights, goal, alpha):
     output = neural_network(input, weights, 0)
     n = len(weights)
-    tmp = [output[i] - goal[i] for i in range(len(output))]
-    delta = [[2 * alpha / n * tmp[i] * input[j] for j in range(len(input))] for i in range(len(tmp))]
+    m = len(input)
+    tmp = [output[i] - goal[i] for i in range(n)]
+    delta = [[2 * alpha / n * tmp[i] * input[j] for j in range(m)] for i in range(n)]
     
-    new_weights = [[0 for i in range(len(weights[0]))] for j in range(len(weights))]
-    for i in range(len(weights)):
-        for j in range(len(weights[i])):
+    new_weights = [[0 for i in range(m)] for j in range(n)]
+    for i in range(n):
+        for j in range(m):
             new_weights[i][j] = weights[i][j] - delta[i][j]
     return new_weights
 
 def error(input, weights, goal):
     output = neural_network(input, weights, 0)
     n = len(weights)
-    tmp = [(output[i] - goal[i]) ** 2 for i in range(len(output))]
+    tmp = [(output[i] - goal[i]) ** 2 for i in range(n)]
     return sum(tmp) / n
 
 if __name__ == '__main__':
