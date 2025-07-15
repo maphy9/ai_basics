@@ -18,3 +18,25 @@ def vectors_tensor_product(v1, v2):
 
 def transpose_matrix(m):
     return [[m[j][i] for j in range(len(m))] for i in range(len(m[0]))]
+
+def subtract_vectors(v1, v2):
+    return [v1[i] - v2[i] for i in range(len(v1))]
+
+def multiply_vectors(v1, v2):
+    return [v1[i] * v2[i] for i in range(len(v1))]
+
+def multiply_vector(v, a):
+    return [a * v[i] for i in range(len(v))]
+
+def multiply_matrix_vector(m, v):
+    result = [0 for i in range(len(m))]
+    for i in range(len(m)):
+        for j in range(len(v)):
+            result[i] += m[i][j] * v[j]
+    return result
+
+def multiply_matrix(m, a):
+    return [[m[i][j] * a for j in range(len(m[i]))] for i in range(len(m))]
+
+def subtract_matrixes(m1, m2):
+    return [[m1[i][j] - m2[i][j] for j in range(len(m1[i]))] for i in range(len(m1))]

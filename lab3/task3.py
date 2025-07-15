@@ -1,5 +1,5 @@
 from random import uniform
-from neural_network import deep_neural_network, neural_network
+from neural_network import neural_network
 from json import load, dump
 from utils import *
 
@@ -53,60 +53,58 @@ class NeuralNetwork:
                 output = activation_function(output)
         return output
 
-
-    def __change_weights(self, outputs, expected_outputs, alpha):
-        layers = self.layers
-
-        output_layer_delta = [
-            2 / layers[-1].get_output_size() * (output - expected_output)
-            for output, expected_output in zip(outputs[-1], expected_outputs)
-        ]
-        weights_deltas = [[[]] for layer in layers]
-        output_layer_weights_delta = vectors_tensor_product(output_layer_delta, outputs[-2])
-        weights_deltas[-1] = output_layer_weights_delta
-
-        layers_count = len(outputs) - 1
-        for l in range(layers_count - 1, 0, -1):
-            layer = layers[l]
-            output_layer_weights = layer.weights
-            activation_function_derivative = layer.activation_function_derivative
-            hidden_layer_output = outputs[l]
-
-            transposed_output_layer_weights = transpose_matrix(output_layer_weights)
-            n = len(transposed_output_layer_weights)
-            m = len(output_layer_delta)
-            hidden_layer_delta = [0 for i in range(n)]
-            for i in range(n):
-                for j in range(m):
-                    hidden_layer_delta[i] += transposed_output_layer_weights[i][j] * output_layer_delta[j]
-            
-            if activation_function_derivative:
-                hidden_layer_output_deriv = activation_function_derivative(hidden_layer_output)
-                hidden_layer_delta = [hld * hlord for hld, hlord in zip(hidden_layer_delta, hidden_layer_output_deriv)]
-
-            input = outputs[l - 1]
-            hidden_layer_weights_delta = vectors_tensor_product(hidden_layer_delta, input)
-            weights_deltas[l - 1] = hidden_layer_weights_delta
-            output_layer_delta = hidden_layer_delta
-
-        for layer, weights_delta in zip(layers, weights_deltas):
+    
+    
+    def fit(self, input, expected_output, alpha=0.01):
+        # Step 1: calculate output for each layer
+        layer_inputs = [[] for layer in self.layers]
+        layer_inputs[0] = input
+        layer_outputs = [[] for layer in self.layers]
+        for layer_index in range(len(self.layers)):
+            input = layer_inputs[layer_index]
+            layer = self.layers[layer_index]
             weights = layer.weights
+            output = [0 for i in range(len(weights))]
             for i in range(len(weights)):
-                for j in range(len(weights[i])):
-                    weights[i][j] = weights[i][j] - alpha * weights_delta[i][j]
+                for j in range(len(input)):
+                    output[i] += weights[i][j] * input[j]
+            if layer.activation_function:
+                output = layer.activation_function(output)
+            if layer_index < len(self.layers) - 1:
+                layer_inputs[layer_index + 1] = output
+            layer_outputs[layer_index] = output
 
+        # Step 2: calculate output layer delta
+        output_layer_output = layer_outputs[-1]
+        expected_output_difference = subtract_vectors(output_layer_output, expected_output)
+        n = len(output_layer_output)
+        output_layer_delta = multiply_vector(expected_output_difference, 2 / n)
+        layer_deltas = [[] for layer in self.layers]
+        layer_deltas[-1] = output_layer_delta
 
-    def fit(self, input, expected_outputs, alpha=0.01):
-        outputs = [input]
-        for i, layer in enumerate(self.layers):
-            weights = layer.weights
-            activation_function = layer.activation_function
-            output = neural_network(outputs[-1], weights, 0)
-            if activation_function:
-                output = activation_function(output)
-            outputs.append(output)
+        # Step 3: calculate hidden layer deltas
+        for layer_index in range(len(self.layers) - 2, -1, -1):
+            layer = self.layers[layer_index]
+            next_layer = self.layers[layer_index + 1]
+            weights = next_layer.weights
+            transposed_weights = transpose_matrix(weights)
+            next_layer_delta = layer_deltas[layer_index + 1]
+            layer_delta = multiply_matrix_vector(transposed_weights, next_layer_delta)
+            if layer.activation_function_derivative:
+                layer_output = layer_outputs[layer_index]
+                layer_output_deriv = layer.activation_function_derivative(layer_output)
+                layer_delta = multiply_vectors(layer_delta, layer_output_deriv)
+            layer_deltas[layer_index] = layer_delta
 
-        self.__change_weights(outputs, expected_outputs, alpha)
+        # Step 4: calculate layer weights deltas
+        for layer_index in range(len(self.layers)):
+            layer_delta = layer_deltas[layer_index]
+            layer_input = layer_inputs[layer_index]
+            layer_weights_delta = vectors_tensor_product(layer_delta, layer_input)
+            layer_weights_delta = multiply_matrix(layer_weights_delta, alpha)
+            old_weights = self.layers[layer_index].weights
+            new_weights = subtract_matrixes(old_weights, layer_weights_delta)
+            self.layers[layer_index].weights = new_weights
     
 
     @staticmethod
@@ -163,24 +161,27 @@ if __name__ == '__main__':
                 outputs.append([0 if i != label else 1 for i in range(10)])
         return outputs
 
-    input_layer = Layer(40, 784, weight_min_value=-0.1, weight_max_value=0.1, activation_function='relu')
-    nn = NeuralNetwork(input_layer)
-    nn.add_layer(10, weight_min_value=-0.1, weight_max_value=0.1)
+    # input_layer = Layer(40, 784, weight_min_value=-0.1, weight_max_value=0.1, activation_function='relu')
+    # nn = NeuralNetwork(input_layer)
+    # nn.add_layer(10, weight_min_value=-0.1, weight_max_value=0.1)
 
+    nn = NeuralNetwork.load_weights('results.json')
     training_inputs = read_inputs('datasets/train-images.idx3-ubyte')
     print('read training images')
     training_outputs = read_outputs('datasets/train-labels.idx1-ubyte')
     print('read training labels')
+
     i = 1
-    for input, expected_outputs in zip(training_inputs, training_outputs):
-        nn.fit(input, expected_outputs, alpha=0.005)
-        print(' ' * 100 , end='\r')
-        print(f'{round(i / len(training_inputs) * 100, 2)}%', end='\r')
-        i += 1
-    print()
+    number_of_inputs = len(training_inputs)
+    number_of_iterations = 2
+    for _ in range(number_of_iterations):
+        for input, expected_output in zip(training_inputs, training_outputs):
+            nn.fit(input, expected_output, alpha=0.001)
+            print(' ' * 24, end='\r')
+            print(f'{round(i / (number_of_inputs * number_of_iterations) * 100, 2)}%', end='\r')
+            i += 1
     print('neural network fitting finished')
     nn.save_weights('results.json')
-    # nn = NeuralNetwork.load_weights('results.json')
 
     testing_inputs = read_inputs('datasets/t10k-images.idx3-ubyte')
     print('read testing images')
@@ -188,18 +189,16 @@ if __name__ == '__main__':
     print('read testing labels')
     i = 1
     correct_count = 0
-    for input, expected_outputs in zip(testing_inputs, testing_outputs):
+    for input, expected_output in zip(testing_inputs, testing_outputs):
         res = nn.predict(input)
         max_index = 0
         for j in range(len(res)):
             if res[j] > res[max_index]:
                 max_index = j
-        print(' ' * 100 , end='\r')
-        if expected_outputs[max_index] == 1:
-            print(f'{i}) Correct', end='\r')
+        if expected_output[max_index] == 1:
             correct_count += 1
-        else:
-            print(f'{i}) Incorrect', end='\r')
+        print(' ' * 24, end='\r')
+        print(f'{i * 100 / len(testing_inputs)}\taccuracy: {round(correct_count * 100 / i, 2)}', end='\r')
         i += 1
     print()
     print(f'Accuracy = {correct_count / len(testing_inputs)}')
