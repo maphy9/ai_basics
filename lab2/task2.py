@@ -1,4 +1,4 @@
-from ..lab1.task4 import NeuralNetwork
+from neural_network import NeuralNetwork
 from task1 import error, next_epoc
 
 def train_neural_network(nn, inputs, goals, alpha):

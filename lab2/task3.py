@@ -1,5 +1,5 @@
 from task2 import train_neural_network
-from ..lab1.task4 import NeuralNetwork
+from neural_network import NeuralNetwork
 from testing_set import inputs as testing_inputs, goals as testing_goals
 from training_set import inputs as training_inputs, goals as training_goals
 from random import uniform
@@ -10,7 +10,7 @@ if __name__ == '__main__':
     weights = [[uniform(0, 1) for i in range(3)] for j in range(4)]
     nn = NeuralNetwork(weights)
 
-    for i in range(1000):
+    for i in range(10):
         err = train_neural_network(nn, training_inputs, training_goals, alpha)
     
     correct_count = 0

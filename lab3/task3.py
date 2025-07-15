@@ -4,7 +4,7 @@ from json import load, dump
 from utils import *
 
 class Layer:
-    def __init__(self, m=0, n=0, weight_min_value=0., weight_max_value=0., activation_function=None):
+    def __init__(self, m=0, n=0, weight_min_value=-1., weight_max_value=1., activation_function=None):
         weights = [[uniform(weight_min_value, weight_max_value) for i in range(n)] for j in range(m)] 
         self.weights = weights
 
@@ -180,6 +180,7 @@ if __name__ == '__main__':
             print(' ' * 24, end='\r')
             print(f'{round(i / (number_of_inputs * number_of_iterations) * 100, 2)}%', end='\r')
             i += 1
+    print()
     print('neural network fitting finished')
     nn.save_weights('results.json')
 
@@ -198,7 +199,7 @@ if __name__ == '__main__':
         if expected_output[max_index] == 1:
             correct_count += 1
         print(' ' * 24, end='\r')
-        print(f'{i * 100 / len(testing_inputs)}\taccuracy: {round(correct_count * 100 / i, 2)}', end='\r')
+        print(f'{round(i * 100 / len(testing_inputs), 2)}\taccuracy: {round(correct_count * 100 / i, 2)}', end='\r')
         i += 1
     print()
     print(f'Accuracy = {correct_count / len(testing_inputs)}')

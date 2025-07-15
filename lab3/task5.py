@@ -4,14 +4,18 @@ from keras.layers import Dense
 from keras.optimizers import SGD
 from testing_set import inputs as testing_inputs, goals as testing_goals
 from training_set import inputs as training_inputs, goals as training_goals
+from random import uniform
 
 model = Sequential()
-model.add(Dense(4, input_dim=3, use_bias=False))
+weights1 = [np.array([[uniform(0, 1) for i in range(4)] for j in range(3)])]
+weights2 = [np.array([[uniform(0, 1) for i in range(4)] for j in range(4)])]
+model.add(Dense(4, weights=weights1, use_bias=False, activation='relu'))
+model.add(Dense(4, weights=weights2))
 
-opt = SGD(lr=0.05)
+opt = SGD(lr=0.01)
 model.compile(opt, loss='mse')
 
-for _ in range(10):
+for _ in range(15):
     for input, expected_output in zip(np.array(training_inputs), np.array(training_goals)):
         model.fit(np.array([input]), np.array([expected_output]))
 

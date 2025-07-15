@@ -1,4 +1,4 @@
-from ..lab1.task3 import neural_network
+from neural_network import neural_network
 
 def next_epoc(input, weights, goal, alpha):
     output = neural_network(input, weights, 0)
